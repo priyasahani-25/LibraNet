@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LibraNet — E-Book Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+
+<!-- ═══════════════════════ LOGIN PAGE ═══════════════════════════════════════ -->
+<div id="loginPage" class="login-page">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">📚</div>
+      <div class="login-title">LibraNet</div>
+      <div class="login-subtitle">E-Book Management System</div>
+    </div>
+    <div id="loginError" class="alert-box error" style="display:none"></div>
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <input type="email" id="loginEmail" class="form-input" placeholder="librarian@libranet.com" value="librarian@libranet.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" value="librarian123">
+    </div>
+    <button class="btn btn-primary btn-full" id="loginBtn" onclick="doLogin()">Sign In</button>
+    <div class="login-hint">Default: librarian@libranet.com / librarian123</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ MAIN APP ════════════════════════════════════════ -->
+<div id="appShell" class="app-shell" style="display:none">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-title">LibraNet</div>
+      <div class="logo-sub">E-Book Management</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">
+        <div class="nav-label">Main</div>
+        <div class="nav-item active" data-page="dashboard">
+          <span class="icon">📊</span> Dashboard
+        </div>
+        <div class="nav-item" data-page="books">
+          <span class="icon">📚</span> Book Catalog
+        </div>
+        <div class="nav-item" data-page="members">
+          <span class="icon">👥</span> Members
+        </div>
+        <div class="nav-item" data-page="transactions">
+          <span class="icon">🔄</span> Transactions
+          <span class="nav-badge" id="overdueNavBadge" style="display:none">0</span>
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Finance</div>
+        <div class="nav-item" data-page="fines">
+          <span class="icon">💰</span> Fine Management
+        </div>
+        <div class="nav-item" data-page="purchase">
+          <span class="icon">🛒</span> Purchase Orders
+        </div>
+        <div class="nav-item" data-page="suppliers">
+          <span class="icon">🏭</span> Suppliers
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Insights</div>
+        <div class="nav-item" data-page="reports">
+          <span class="icon">📈</span> Reports
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="avatar" id="userAvatar">SM</div>
+        <div class="user-info">
+          <div class="name" id="userName">Loading...</div>
+          <div class="role" id="userRole">Librarian</div>
+        </div>
+        <span class="logout-btn" title="Logout" onclick="doLogout()">⏻</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+    <div class="topbar">
+      <div class="page-title" id="pageTitle">Dashboard</div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="globalSearch" placeholder="Search books, members, ISBN..." oninput="handleGlobalSearch(this.value)">
+      </div>
+      <button class="btn btn-primary" id="topbarActionBtn">+ Add Book</button>
+      <button id="themeToggle" class="btn btn-ghost" style="font-size: 20px; padding: 6px 12px; margin-right: 12px;" title="Toggle Light/Dark Mode">
+  ☀️ </button>
+    </div>
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- PAGE PANELS -->
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div id="page-dashboard" class="page active">
+        <div class="stats-grid" id="dashboardStats">
+          <div class="stat-card gold skeleton"><div class="stat-label">Total Books</div><div class="stat-value">—</div></div>
+          <div class="stat-card blue skeleton"><div class="stat-label">Issued</div><div class="stat-value">—</div></div>
+          <div class="stat-card green skeleton"><div class="stat-label">Members</div><div class="stat-value">—</div></div>
+          <div class="stat-card red skeleton"><div class="stat-label">Overdue</div><div class="stat-value">—</div></div>
+        </div>
+        <div class="two-col">
+          <div>
+            <div class="section-header">
+              <div class="section-title">⚠ Overdue Alerts</div>
+              <button class="btn btn-ghost btn-small" onclick="switchPage('transactions')">View All</button>
+            </div>
+            <div id="overdueAlerts"><div class="empty-state">Loading...</div></div>
+          </div>
+          <div>
+            <div class="section-header">
+              <div class="section-title">🔄 Recent Transactions</div>
+              <button class="btn btn-ghost btn-small" onclick="switchPage('transactions')">View All</button>
+            </div>
+            <div class="table-wrap" id="recentTxns"><div class="empty-state">Loading...</div></div>
+          </div>
+        </div>
+        <div class="section-header">
+          <div class="section-title">📚 Top Borrowed Subjects</div>
+        </div>
+        <div id="topSubjects" class="table-wrap" style="padding:18px"></div>
+      </div>
+
+      <!-- BOOKS -->
+      <div id="page-books" class="page">
+        <div class="filter-bar">
+          <input type="text" class="form-input" id="bookSearch" placeholder="Search title, author, ISBN..." style="max-width:280px" oninput="debounce(loadBooks,400)()">
+          <select class="form-input" id="bookSubjectFilter" style="max-width:160px" onchange="loadBooks()">
+            <option value="">All Subjects</option>
+            <option>Computer Science</option><option>Databases</option><option>Systems</option>
+            <option>Networking</option><option>Mathematics</option><option>Physics</option>
+            <option>Software Eng.</option>
+          </select>
+          <select class="form-input" id="bookStatusFilter" style="max-width:140px" onchange="loadBooks()">
+            <option value="">All Status</option>
+            <option value="available">Available</option>
+            <option value="issued">Issued</option>
+            <option value="overdue">Overdue</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Book ID</th><th>Title</th><th>Author</th><th>Subject</th>
+              <th>ISBN</th><th>Total</th><th>Available</th><th>Status</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="booksTableBody"><tr><td colspan="9" class="loading-cell">Loading...</td></tr></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="booksPagination"></div>
+      </div>
+
+      <!-- MEMBERS -->
+      <div id="page-members" class="page">
+        <div class="filter-bar">
+          <input type="text" class="form-input" id="memberSearch" placeholder="Search name, email, ID..." style="max-width:280px" oninput="debounce(loadMembers,400)()">
+          <select class="form-input" id="memberTypeFilter" style="max-width:140px" onchange="loadMembers()">
+            <option value="">All Types</option>
+            <option value="student">Students</option>
+            <option value="staff">Staff</option>
+          </select>
+          <select class="form-input" id="memberStatusFilter" style="max-width:140px" onchange="loadMembers()">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Member ID</th><th>Name</th><th>Type</th><th>Department</th>
+              <th>Books Issued</th><th>Outstanding Fine</th><th>Status</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="membersTableBody"><tr><td colspan="8" class="loading-cell">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TRANSACTIONS -->
+      <div id="page-transactions" class="page">
+        <div class="filter-bar">
+          <select class="form-input" id="txnStatusFilter" style="max-width:160px" onchange="loadTransactions()">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="overdue">Overdue</option>
+            <option value="returned">Returned</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Txn ID</th><th>Type</th><th>Book</th><th>Member</th>
+              <th>Issue Date</th><th>Due Date</th><th>Status</th><th>Fine</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="txnsTableBody"><tr><td colspan="9" class="loading-cell">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- FINES -->
+      <div id="page-fines" class="page">
+        <div class="two-col">
+          <div>
+            <div class="section-title" style="margin-bottom:16px">💰 Pending Fines</div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Fine ID</th><th>Member</th><th>Book</th><th>Days</th><th>Amount</th><th>Action</th></tr></thead>
+                <tbody id="finesTableBody"><tr><td colspan="6" class="loading-cell">Loading...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <div class="section-title" style="margin-bottom:16px">🧮 Fine Calculator</div>
+            <div class="fine-calc-card">
+              <div class="form-group">
+                <label class="form-label">Select Transaction</label>
+                <select class="form-input" id="fineCalcTxn" onchange="calcFine()">
+                  <option value="">— select overdue transaction —</option>
+                </select>
+              </div>
+              <div id="fineCalcResult" style="display:none">
+                <div class="fine-row"><span class="fine-key">Member</span><span id="fcMember">—</span></div>
+                <div class="fine-row"><span class="fine-key">Book</span><span id="fcBook">—</span></div>
+                <div class="fine-row"><span class="fine-key">Due Date</span><span id="fcDue">—</span></div>
+                <div class="fine-row"><span class="fine-key">Days Overdue</span><span id="fcDays" style="color:var(--danger)">—</span></div>
+                <div class="fine-row"><span class="fine-key">Rate / Day</span><span>₹10</span></div>
+                <div class="fine-row total-row"><span class="fine-key">Total Fine</span><span id="fcTotal" class="fine-total">—</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PURCHASE ORDERS -->
+      <div id="page-purchase" class="page">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>PO Number</th><th>Supplier</th><th>Books</th><th>Amount</th>
+              <th>Order Date</th><th>Status</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="poTableBody"><tr><td colspan="7" class="loading-cell">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SUPPLIERS -->
+      <div id="page-suppliers" class="page">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Supplier ID</th><th>Name</th><th>Contact</th><th>Phone</th>
+              <th>City</th><th>Total Orders</th><th>Status</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="suppliersTableBody"><tr><td colspan="8" class="loading-cell">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- REPORTS -->
+      <div id="page-reports" class="page">
+        <div class="stats-grid" id="monthlyStats">
+          <div class="stat-card gold skeleton"><div class="stat-label">Books Issued (Month)</div><div class="stat-value">—</div></div>
+          <div class="stat-card green skeleton"><div class="stat-label">Books Returned</div><div class="stat-value">—</div></div>
+          <div class="stat-card blue skeleton"><div class="stat-label">New Members</div><div class="stat-value">—</div></div>
+          <div class="stat-card red skeleton"><div class="stat-label">Fines Collected</div><div class="stat-value">—</div></div>
+        </div>
+        <div class="two-col">
+          <div class="table-wrap" style="padding:20px">
+            <div class="section-title" style="margin-bottom:14px">📊 Top Borrowed Subjects</div>
+            <div id="reportSubjects"></div>
+          </div>
+          <div class="table-wrap" style="padding:20px">
+            <div class="section-title" style="margin-bottom:14px">📋 Export Reports</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <button class="btn btn-ghost" onclick="exportReport('overdue')">📄 Overdue Books List</button>
+              <button class="btn btn-ghost" onclick="exportReport('stock')">📄 Stock Summary</button>
+              <button class="btn btn-ghost" onclick="exportReport('fines')">📄 Fine Collection Report</button>
+              <button class="btn btn-ghost" onclick="exportReport('members')">📄 Member Activity Report</button>
+              <button class="btn btn-ghost" onclick="exportReport('purchase')">📄 Purchase History</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- .content -->
+  </div><!-- .main -->
+</div><!-- #appShell -->
+
+<!-- ════════════════════════ MODALS ══════════════════════════════════════════ -->
+
+<!-- ADD/EDIT BOOK MODAL -->
+<div class="modal-overlay" id="bookModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="bookModalTitle">Add New Book</div>
+      <div class="modal-close" onclick="closeModal('bookModal')">✕</div>
+    </div>
+    <input type="hidden" id="bookEditId">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Book Title *</label>
+        <input type="text" id="bookTitle" class="form-input" placeholder="Enter book title">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Author *</label>
+        <input type="text" id="bookAuthor" class="form-input" placeholder="Author name(s)">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">ISBN *</label>
+        <input type="text" id="bookISBN" class="form-input" placeholder="978-X-XXX-XXXXX-X">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Subject *</label>
+        <input type="text" id="bookSubject" class="form-input" placeholder="e.g. Computer Science">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Publisher</label>
+        <input type="text" id="bookPublisher" class="form-input" placeholder="Publisher name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Edition</label>
+        <input type="text" id="bookEdition" class="form-input" placeholder="e.g. 4th Edition, 2024">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Total Copies *</label>
+        <input type="number" id="bookCopies" class="form-input" placeholder="1" min="1" value="1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Location (Shelf)</label>
+        <input type="text" id="bookLocation" class="form-input" placeholder="e.g. A-12">
+      </div>
+    </div>
+    <div id="bookModalError" class="alert-box error" style="display:none"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('bookModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBook()">Save Book</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MEMBER MODAL -->
+<div class="modal-overlay" id="memberModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="memberModalTitle">Add New Member</div>
+      <div class="modal-close" onclick="closeModal('memberModal')">✕</div>
+    </div>
+    <input type="hidden" id="memberEditId">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Full Name *</label>
+        <input type="text" id="memberName" class="form-input" placeholder="Full name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email *</label>
+        <input type="email" id="memberEmail" class="form-input" placeholder="email@example.com">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Password *</label>
+        <input type="password" id="memberPassword" class="form-input" placeholder="Min. 6 characters">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone</label>
+        <input type="text" id="memberPhone" class="form-input" placeholder="10-digit number">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Member Type *</label>
+        <select id="memberType" class="form-input">
+          <option value="student">Student</option>
+          <option value="staff">Staff</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Department</label>
+        <input type="text" id="memberDept" class="form-input" placeholder="e.g. CSE, Physics">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Roll No. (Students)</label>
+        <input type="text" id="memberRollNo" class="form-input" placeholder="Roll number">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Role</label>
+        <select id="memberRole" class="form-input">
+          <option value="member">Member</option>
+          <option value="librarian">Librarian</option>
+        </select>
+      </div>
+    </div>
+    <div id="memberModalError" class="alert-box error" style="display:none"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('memberModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMember()">Save Member</button>
+    </div>
+  </div>
+</div>
+
+<!-- ISSUE BOOK MODAL -->
+<div class="modal-overlay" id="issueModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Issue Book</div>
+      <div class="modal-close" onclick="closeModal('issueModal')">✕</div>
+    </div>
+    <input type="hidden" id="issueBookId">
+    <div class="form-group">
+      <label class="form-label">Book</label>
+      <input type="hidden" id="issueBookTitle">
+
+  <select id="issueBookSelect" class="form-input" onchange="document.getElementById('issueBookId').value = this.value">
+  <option value="">-- Select an Available Book --</option>
+  </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Member ID or Name *</label>
+      <input type="text" id="issueMemberSearch" class="form-input" placeholder="Type member ID or name..." oninput="searchMemberForIssue(this.value)">
+      <div id="memberSearchResults" class="search-results"></div>
+      <input type="hidden" id="issueMemberId">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Issue Date</label>
+        <input type="date" id="issueDate" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Loan Period (days)</label>
+        <input type="number" id="issueLoanDays" class="form-input" value="14" min="1" max="90">
+      </div>
+    </div>
+    <div id="issueModalError" class="alert-box error" style="display:none"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('issueModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmIssue()">✓ Confirm Issue</button>
+    </div>
+  </div>
+</div>
+
+<!-- RETURN BOOK MODAL -->
+<div class="modal-overlay" id="returnModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Return Book</div>
+      <div class="modal-close" onclick="closeModal('returnModal')">✕</div>
+    </div>
+    <input type="hidden" id="returnTxnId">
+    <div class="return-summary" id="returnSummary"></div>
+    <div id="returnModalError" class="alert-box error" style="display:none"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('returnModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmReturn()">✓ Confirm Return</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD SUPPLIER MODAL -->
+<div class="modal-overlay" id="supplierModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="supplierModalTitle">Add Supplier</div>
+      <div class="modal-close" onclick="closeModal('supplierModal')">✕</div>
+    </div>
+    <input type="hidden" id="supplierEditId">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Supplier Name *</label>
+        <input type="text" id="supplierName" class="form-input" placeholder="Company name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contact Person</label>
+        <input type="text" id="supplierContact" class="form-input" placeholder="Contact name">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Phone</label>
+        <input type="text" id="supplierPhone" class="form-input" placeholder="Phone number">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="supplierEmail" class="form-input" placeholder="orders@supplier.com">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">City</label>
+        <input type="text" id="supplierCity" class="form-input" placeholder="City">
+      </div>
+      <div class="form-group">
+        <label class="form-label">GSTIN</label>
+        <input type="text" id="supplierGSTIN" class="form-input" placeholder="GSTIN number">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('supplierModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSupplier()">Save Supplier</button>
+    </div>
+  </div>
+</div>
+
+<!-- PURCHASE ORDER MODAL -->
+<div class="modal-overlay" id="poModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title">New Purchase Order</div>
+      <div class="modal-close" onclick="closeModal('poModal')">✕</div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Supplier *</label>
+        <select id="poSupplier" class="form-input"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Expected Delivery Date</label>
+        <input type="date" id="poExpectedDate" class="form-input">
+      </div>
+    </div>
+    <div class="section-title" style="margin:12px 0 8px;font-size:13px">Order Items</div>
+    <div id="poItems">
+      <div class="po-item-row">
+        <input class="form-input" placeholder="Book Title" style="flex:2">
+        <input class="form-input" placeholder="Author">
+        <input class="form-input" placeholder="ISBN">
+        <input class="form-input" type="number" placeholder="Qty" min="1" style="width:70px">
+        <input class="form-input" type="number" placeholder="Unit ₹" style="width:90px">
+        <button class="btn btn-ghost btn-small" onclick="addPOItem()">+ Add</button>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:12px">
+      <label class="form-label">Notes</label>
+      <input type="text" id="poNotes" class="form-input" placeholder="Additional notes">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('poModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePO()">Create Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- COLLECT FINE MODAL -->
+<div class="modal-overlay" id="collectFineModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Collect Fine</div>
+      <div class="modal-close" onclick="closeModal('collectFineModal')">✕</div>
+    </div>
+    <input type="hidden" id="collectFineId">
+    <div id="collectFineSummary"></div>
+    <div class="form-group" style="margin-top:14px">
+      <label class="form-label">Amount to Collect (₹)</label>
+      <input type="number" id="collectFineAmount" class="form-input" min="1">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('collectFineModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmCollectFine()">💰 Collect</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE MODAL -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <div class="modal-title">Confirm Delete</div>
+      <div class="modal-close" onclick="closeModal('confirmModal')">✕</div>
+    </div>
+    <p id="confirmMessage" style="color:var(--text2);font-size:14px;line-height:1.6;margin-bottom:20px"></p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('confirmModal')">Cancel</button>
+      <button class="btn" style="background:var(--danger);color:#fff" id="confirmDeleteBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="./js/api.js"></script>
+<script src="./js/app.js"></script>
+</body>
+</html>

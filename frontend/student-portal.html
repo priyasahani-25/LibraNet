@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Portal - LibraNet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=2">
+  <style>
+    /* Additional structural styles for student portal specifically if needed beyond style.css */
+    .welcome-banner {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .welcome-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .welcome-sub {
+      color: var(--text2);
+      font-size: 13.5px;
+    }
+    
+    /* Reusing app-shell and sidebar from style.css */
+    .two-col-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    
+    @media (max-width: 900px) {
+      .two-col-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .section-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-shell" id="appShell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-title">LibraNet</div>
+      <div class="logo-sub">E-BOOK MANAGEMENT</div>
+    </div>
+
+    <div class="nav">
+      <div class="nav-item active" data-page="dashboard" onclick="switchView('dashboard')">
+        <span class="icon">🏠</span> Dashboard
+      </div>
+      <div class="nav-item" data-page="search" onclick="switchView('search')">
+        <span class="icon">🔍</span> Search Books
+      </div>
+      <div class="nav-item" data-page="history" onclick="switchView('history')">
+        <span class="icon">🕒</span> Borrow History
+      </div>
+      <div class="nav-item" data-page="notifications" onclick="switchView('notifications')">
+        <span class="icon">🔔</span> Notifications
+      </div>
+      <div class="nav-item" data-page="profile" onclick="switchView('profile')">
+        <span class="icon">👤</span> Profile
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="avatar" id="sidebarAvatar">ST</div>
+        <div class="user-info">
+          <div class="name" id="sidebarName">Student Name</div>
+          <div class="role" id="sidebarRole">Student</div>
+        </div>
+        <div class="logout-btn" onclick="studentLogout()" title="Log out">🚪</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <header class="topbar">
+      <div class="page-title" id="topbarTitle">Dashboard</div>
+      
+      <div class="search-wrap" style="max-width: 400px; margin: 0 auto; display: none;" id="topbarSearchContainer">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Search library..." id="globalSearch" oninput="handleStudentSearch(this.value)">
+      </div>
+      
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <button id="themeToggle" class="btn btn-ghost" style="padding: 6px; border-radius: 50%; width: 32px; height: 32px; border: none; background: transparent; font-size: 16px;">🌙</button>
+        <div style="position: relative; font-size: 18px; cursor: pointer;">
+          🔔
+          <div id="topbarNotifBadge" class="nav-badge" style="position: absolute; top: -5px; right: -5px; display: none;">1</div>
+        </div>
+        <div class="avatar" id="topbarAvatar" style="width: 32px; height: 32px; font-size: 11px;">ST</div>
+        <span style="font-size: 13.5px; font-weight: 500;" id="studentName">Student</span>
+      </div>
+    </header>
+
+    <div class="content">
+      
+      <!-- VIEW: DASHBOARD -->
+      <div id="view-dashboard" class="page active">
+        <!-- WELCOME BANNER -->
+        <div class="welcome-banner">
+          <div class="welcome-title">Welcome back, <span id="welcomeName">Student</span>! 👋</div>
+          <div class="welcome-sub">Here's your library overview</div>
+        </div>
+
+        <!-- STATS GRID -->
+        <div class="stats-grid">
+          <div class="stat-card blue">
+            <div class="stat-label">Active Borrows</div>
+            <div class="stat-value" id="statActiveBorrows">0</div>
+            <div class="stat-sub" id="statMaxAllowed">Max 4 allowed</div>
+            <div style="position: absolute; top: 16px; right: 16px; opacity: 0.2; font-size: 32px;">📖</div>
+          </div>
+          
+          <div class="stat-card green">
+            <div class="stat-label">Overdue</div>
+            <div class="stat-value" id="statOverdue">0</div>
+            <div class="stat-sub">Books needing return</div>
+            <div style="position: absolute; top: 16px; right: 16px; opacity: 0.2; font-size: 32px;">⚠️</div>
+          </div>
+          
+          <div class="stat-card gold">
+            <div class="stat-label">Pending Fines</div>
+            <div class="stat-value" id="statFines">₹0</div>
+            <div class="stat-sub">0 unpaid</div>
+            <div style="position: absolute; top: 16px; right: 16px; opacity: 0.2; font-size: 32px;">💰</div>
+          </div>
+          
+          <div class="stat-card blue" style="border-top-color: #8b5cf6;">
+            <div class="stat-label">Notifications</div>
+            <div class="stat-value" id="statNotifications">0</div>
+            <div class="stat-sub">Unread</div>
+            <div style="position: absolute; top: 16px; right: 16px; opacity: 0.2; font-size: 32px;">🔔</div>
+          </div>
+        </div>
+
+        <!-- 2-COLUMN GRID -->
+        <div class="two-col-grid">
+          
+          <!-- CURRENTLY BORROWED -->
+          <div class="section-box">
+            <div class="section-title">
+              <span>📖</span> Currently Borrowed
+            </div>
+            <div id="currentlyBorrowedList">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+          
+          <!-- RECENT NOTIFICATIONS -->
+          <div class="section-box">
+            <div class="section-title">
+              <span>🔔</span> Recent Notifications
+            </div>
+            <div id="recentNotificationsList">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- VIEW: SEARCH BOOKS -->
+      <div id="view-search" class="page">
+        <div class="section-box" style="margin-bottom: 20px;">
+          <div class="section-title"><span>📚</span> Library Catalog</div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Author</th>
+                  <th>Subject</th>
+                  <th>ISBN</th>
+                  <th>Availability</th>
+                </tr>
+              </thead>
+              <tbody id="studentBooksTableBody">
+                <tr><td colspan="5" class="loading-cell">Loading books...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW: BORROW HISTORY -->
+      <div id="view-history" class="page">
+        <div class="section-box" style="margin-bottom: 20px;">
+          <div class="section-title"><span>🕒</span> Borrowing History</div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Book</th>
+                  <th>Issue Date</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
+                  <th>Fine</th>
+                </tr>
+              </thead>
+              <tbody id="studentHistoryTableBody">
+                <tr><td colspan="5" class="loading-cell">Loading history...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW: NOTIFICATIONS -->
+      <div id="view-notifications" class="page">
+        <div class="section-box" style="margin-bottom: 20px; min-height: 400px;">
+          <div class="section-title"><span>🔔</span> All Notifications</div>
+          <div id="fullNotificationsList">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW: PROFILE -->
+      <div id="view-profile" class="page">
+        <div class="section-box" style="margin-bottom: 20px; max-width: 600px;">
+          <div class="section-title"><span>👤</span> My Profile</div>
+          <div style="display: flex; flex-direction: column; gap: 16px; padding: 10px;">
+            <div style="display: flex; gap: 20px; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 10px;">
+              <div id="profileAvatar" class="avatar" style="width: 80px; height: 80px; font-size: 24px;"></div>
+              <div>
+                <h2 id="profileName" style="margin-bottom: 4px;">Name</h2>
+                <div id="profileRole" style="color: var(--text3); font-family: 'DM Mono', monospace; font-size: 13px;">Role</div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <span class="form-label">Email</span>
+                <div id="profileEmail" style="font-weight: 500;">-</div>
+              </div>
+              <div class="form-group">
+                <span class="form-label">Phone</span>
+                <div id="profilePhone" style="font-weight: 500;">-</div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <span class="form-label">Department</span>
+                <div id="profileDept" style="font-weight: 500;">-</div>
+              </div>
+              <div class="form-group">
+                <span class="form-label">ID / Roll No</span>
+                <div id="profileId" style="font-weight: 500;">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Toast Container -->
+<div id="toast" class="toast"></div>
+
+<!-- Scripts -->
+<script src="js/api.js"></script>
+<script src="js/student.js"></script>
+
+<!-- Global Toast Function (copied from app.js for student portal use) -->
+<script>
+  function toast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = (type === 'success' ? '✓ ' : '✕ ') + msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+</script>
+</body>
+</html>
